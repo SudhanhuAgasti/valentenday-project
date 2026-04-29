@@ -563,6 +563,27 @@
             opacity: 0;
             pointer-events: none;
         }
+
+        /* Heart Cursor Trail */
+        .cursor-heart {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-size: 15px;
+            color: var(--primary);
+            user-select: none;
+            animation: heartFadeOut 1s linear forwards;
+        }
+
+        @keyframes heartFadeOut {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
     </style>
 </head>
 
@@ -619,10 +640,10 @@
         <div class="slide" id="slide-3">
             <div class="gift-wrapper">
                 <!-- PNG Gift Images -->
-                <img src="/img/chocklet.png" class="png-gift" id="gift-tl" alt="Gift">
-                <img src="/img/diamond ring box.png" class="png-gift" id="gift-tr" alt="Gift">
-                <img src="/img/pink color teddy.png" class="png-gift" id="gift-bl" alt="Gift">
-                <img src="/img/red rose bouquet tied.png" class="png-gift" id="gift-br" alt="Gift">
+                <img src="./img/chocklet.png" class="png-gift" id="gift-tl" alt="Gift">
+                <img src="./img/diamond ring box.png" class="png-gift" id="gift-tr" alt="Gift">
+                <img src="./img/pink color teddy.png" class="png-gift" id="gift-bl" alt="Gift">
+                <img src="./img/red rose bouquet tied.png" class="png-gift" id="gift-br" alt="Gift">
 
                 <div class="main-gift-box" id="gift-box">
                     <div class="box-lid">
@@ -783,10 +804,30 @@
                 for (let i = 0; i < 50; i++) {
                     let star = document.createElement('div');
                     star.style.cssText = `position:absolute;left:${Math.random() * 100}%;top:${Math.random() * 100}%;width:2px;height:2px;background:white;border-radius:50%;opacity:${Math.random()};`;
+                    star.style.animation = `twinkle ${Math.random() * 3 + 2}s infinite ease-in-out`;
                     c.appendChild(star);
                 }
             });
         }
+
+        // Heart Cursor Trail Logic
+        document.addEventListener('mousemove', (e) => {
+            if (Math.random() > 0.15) return;
+            const heart = document.createElement('div');
+            heart.className = 'cursor-heart';
+            heart.innerHTML = '❤️';
+            heart.style.left = e.clientX + 'px';
+            heart.style.top = e.clientY + 'px';
+            
+            // Random movement direction
+            const tx = (Math.random() - 0.5) * 100;
+            const ty = (Math.random() - 0.5) * 100;
+            heart.style.setProperty('--tx', `${tx}px`);
+            heart.style.setProperty('--ty', `${ty}px`);
+            
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 1000);
+        });
 
         createStars(); generateHearts(); generateBgText(); typeWriterEffect(); updateButtons();
     </script>
