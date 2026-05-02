@@ -44,6 +44,37 @@
             overflow: hidden;
             width: 100vw;
             height: 100vh;
+            cursor: none; /* Custom cursor */
+        }
+
+        #petals-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 77, 109, 0.5);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s;
+        }
+
+        .custom-cursor.active {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 77, 109, 0.8);
         }
 
         h1,
@@ -584,6 +615,14 @@
             0%, 100% { opacity: 0.3; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.2); }
         }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: twinkle var(--d) infinite ease-in-out;
+        }
     </style>
 </head>
 
@@ -593,6 +632,9 @@
         <source src="Tera_Khwab.mp3" type="audio/mpeg">
     </audio>
     <div class="music-control" id="music-btn"><i class="fas fa-music"></i></div>
+
+    <div class="custom-cursor" id="cursor"></div>
+    <canvas id="petals-canvas"></canvas>
 
     <button class="nav-btn hidden" id="prev-btn"><i class="fas fa-chevron-left"></i></button>
     <button class="nav-btn" id="next-btn"><i class="fas fa-chevron-right"></i></button>
@@ -659,7 +701,7 @@
 
         <!-- SLIDE 4 -->
         <div class="slide" id="slide-4">
-            <div class="sky-container">
+            <div class="sky-container" id="stars-container">
                 <div class="moon"></div>
             </div>
             <div class="promise-content">
@@ -699,16 +741,91 @@
         const nextBtn = document.getElementById('next-btn');
         const audio = document.getElementById('bg-music');
         const musicBtn = document.getElementById('music-btn');
+        const cursor = document.getElementById('cursor');
         let isPlaying = false;
 
+        // --- CUSTOM CURSOR ---
+        document.addEventListener('mousemove', (e) => {
+            gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.1 });
+            if (Math.random() > 0.1) return;
+            const h = document.createElement('div');
+            h.className = 'cursor-heart';
+            h.innerHTML = '❤️';
+            h.style.left = e.clientX + 'px';
+            h.style.top = e.clientY + 'px';
+            const tx = (Math.random() - 0.5) * 100;
+            const ty = (Math.random() - 0.5) * 100;
+            h.style.setProperty('--tx', `${tx}px`);
+            h.style.setProperty('--ty', `${ty}px`);
+            document.body.appendChild(h);
+            setTimeout(() => h.remove(), 1000);
+        });
+
+        document.addEventListener('mousedown', () => cursor.classList.add('active'));
+        document.addEventListener('mouseup', () => cursor.classList.remove('active'));
+
+        // --- ROSE PETALS CANVAS ---
+        const canvas = document.getElementById('petals-canvas');
+        const ctx = canvas.getContext('2d');
+        let petals = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Petal {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * canvas.height;
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.r = Math.random() * 4 + 2;
+                this.s = Math.random() * 1.5 + 1;
+                this.a = Math.random() * Math.PI;
+                this.as = Math.random() * 0.02;
+            }
+            update() {
+                this.y += this.s;
+                this.x += Math.sin(this.a) * 0.5;
+                this.a += this.as;
+                if (this.y > canvas.height) this.reset();
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 77, 109, ${0.3 + Math.random() * 0.3})`;
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 60; i++) petals.push(new Petal());
+
+        function animatePetals() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            petals.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animatePetals);
+        }
+        animatePetals();
+
+        // --- MUSIC LOGIC ---
         musicBtn.addEventListener('click', () => {
             if (isPlaying) { audio.pause(); musicBtn.innerHTML = '<i class="fas fa-music"></i>'; musicBtn.style.animation = 'none'; }
             else { audio.play().catch(e => { }); musicBtn.innerHTML = '<i class="fas fa-pause"></i>'; musicBtn.style.animation = 'pulse 2s infinite'; }
             isPlaying = !isPlaying;
         });
 
-        document.body.addEventListener('click', () => { if (!isPlaying) { audio.play().then(() => { isPlaying = true; musicBtn.innerHTML = '<i class="fas fa-pause"></i>'; }).catch(() => { }); } }, { once: true });
+        document.body.addEventListener('click', () => { 
+            if (!isPlaying) { 
+                audio.play().then(() => { isPlaying = true; musicBtn.innerHTML = '<i class="fas fa-pause"></i>'; }).catch(() => { }); 
+            } 
+        }, { once: true });
 
+        // --- SLIDE NAVIGATION ---
         function updateButtons() {
             if (currentSlide === 0) prevBtn.classList.add('hidden'); else prevBtn.classList.remove('hidden');
             if (currentSlide === 2 || currentSlide === totalSlides - 1) nextBtn.classList.add('hidden'); else nextBtn.classList.remove('hidden');
@@ -721,7 +838,7 @@
             const incoming = slides[nextIndex];
 
             const tl = gsap.timeline();
-            tl.to(outgoing, { opacity: 0, duration: 0.8, onComplete: () => { outgoing.classList.remove('active'); incoming.classList.add('active'); } })
+            tl.to(outgoing, { opacity: 0, scale: 0.9, duration: 0.8, onComplete: () => { outgoing.classList.remove('active'); incoming.classList.add('active'); } })
                 .fromTo(incoming, { opacity: 0, scale: 1.1 }, { opacity: 1, scale: 1, duration: 0.8, onComplete: () => { currentSlide = nextIndex; updateButtons(); triggerSlideAnimations(currentSlide); } });
         }
 
@@ -729,48 +846,90 @@
         prevBtn.addEventListener('click', () => changeSlide(-1));
 
         function triggerSlideAnimations(index) {
+            if (index === 0) typeWriterEffect();
             if (index === 1) {
+                generateBgText();
                 gsap.to(".memory-card", { y: 0, opacity: 1, duration: 1, stagger: 0.2, ease: "power2.out" });
             }
             if (index === 3) {
+                generateStars();
                 const heartPath = document.querySelector('.heart-path');
                 const length = heartPath.getTotalLength();
                 gsap.set(heartPath, { strokeDasharray: length, strokeDashoffset: length, opacity: 1 });
-                gsap.set(".heart-text, .side-element", { opacity: 0, scale: 0 });
-                gsap.set(".promise-text", { opacity: 0, y: 30 });
+                gsap.set(".heart-text, .side-element, .promise-text", { opacity: 0, scale: 0 });
                 const tl = gsap.timeline();
                 tl.to(heartPath, { strokeDashoffset: 0, duration: 2, ease: "power2.inOut" })
                     .to(heartPath, { fill: "rgba(255, 77, 109, 0.2)", duration: 0.8 }, "-=0.5")
                     .to(".heart-text", { opacity: 1, scale: 1, duration: 1, ease: "back.out(1.7)" }, "-=0.5")
                     .to(".side-element", { opacity: 1, scale: 1, duration: 0.8, stagger: 0.2, ease: "elastic.out(1, 0.3)" }, "-=0.8")
-                    .to(".promise-text", { opacity: 1, y: 0, duration: 1, ease: "power2.out" }, "-=0.5");
+                    .to(".promise-text", { opacity: 1, scale: 1, duration: 1, ease: "power2.out" }, "-=0.5");
             }
         }
 
-        // Slide 3: Gift Logic (FIXED)
+        // --- HELPERS ---
+        function generateStars() {
+            const container = document.getElementById('stars-container');
+            if (container.children.length > 1) return;
+            for (let i = 0; i < 100; i++) {
+                const s = document.createElement('div');
+                s.className = 'star';
+                const size = Math.random() * 3;
+                s.style.width = size + 'px';
+                s.style.height = size + 'px';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                s.style.setProperty('--d', (Math.random() * 3 + 2) + 's');
+                container.appendChild(s);
+            }
+        }
+
         const openBtn = document.getElementById('open-gift-btn');
         openBtn.addEventListener('click', () => {
             const tl = gsap.timeline();
             const isMobile = window.innerWidth <= 768;
-            const distance = isMobile ? 130 : 200; // Controlled spacing
-
+            const distance = isMobile ? 130 : 200;
             tl.to("#gift-box", { rotation: 5, duration: 0.1, yoyo: true, repeat: 5 })
                 .to(".box-lid", { y: -80, rotation: -25, opacity: 0, duration: 0.6, ease: "power2.out" })
                 .to(openBtn, { opacity: 0, pointerEvents: "none", duration: 0.2 }, "<")
-
-                // Animate images out to corners with safe spacing
                 .to("#gift-tl", { opacity: 1, x: -distance, y: -distance, rotation: -10, duration: 1, ease: "back.out(1.5)" }, "-=0.3")
                 .to("#gift-tr", { opacity: 1, x: distance, y: -distance, rotation: 10, duration: 1, ease: "back.out(1.5)" }, "<0.1")
                 .to("#gift-bl", { opacity: 1, x: -distance, y: distance, rotation: -10, duration: 1, ease: "back.out(1.5)" }, "<0.1")
                 .to("#gift-br", { opacity: 1, x: distance, y: distance, rotation: 10, duration: 1, ease: "back.out(1.5)" }, "<0.1")
-
-                .call(() => {
-                    nextBtn.classList.remove('hidden');
-                    gsap.from(nextBtn, { scale: 0, duration: 0.5 });
-                });
+                .call(() => { nextBtn.classList.remove('hidden'); gsap.from(nextBtn, { scale: 0, duration: 0.5 }); });
         });
 
-        function generateHearts() {
+        function typeWriterEffect() {
+            if (document.getElementById('typewriter').textContent !== "") return;
+            gsap.to("#typewriter", { text: "Even when miles apart… my heart is always with you ❤️", duration: 4, delay: 1 });
+            gsap.to(".main-title", { opacity: 1, scale: 1, duration: 2, delay: 4.5, ease: "elastic.out(1, 0.3)" });
+        }
+
+        function generateBgText() {
+            const container = document.getElementById('bg-text-pattern');
+            if (container.innerHTML !== "") return;
+            container.innerHTML = "LOVE U ".repeat(200);
+        }
+
+        document.getElementById('final-btn').addEventListener('click', () => {
+            for (let i = 0; i < 60; i++) {
+                const h = document.createElement('div');
+                h.className = 'cursor-heart';
+                h.innerHTML = '❤️';
+                h.style.left = '50%'; h.style.top = '50%';
+                const tx = (Math.random() - 0.5) * 1200;
+                const ty = (Math.random() - 0.5) * 1200;
+                h.style.setProperty('--tx', `${tx}px`);
+                h.style.setProperty('--ty', `${ty}px`);
+                h.style.fontSize = (Math.random() * 30 + 20) + 'px';
+                document.body.appendChild(h);
+                setTimeout(() => h.remove(), 2000);
+            }
+            gsap.to("#final-box", { opacity: 0, scale: 0.8, filter: "blur(10px)", duration: 1 });
+            gsap.to("#signature", { opacity: 1, scale: 1, duration: 1.5, ease: "power2.out" });
+        });
+
+        // Initialize
+        function init() {
             const container = document.getElementById('hearts-container');
             for (let i = 0; i < 30; i++) {
                 const el = document.createElement('div');
@@ -781,55 +940,10 @@
                 el.style.animationDelay = (Math.random() * 5) + 's';
                 container.appendChild(el);
             }
+            typeWriterEffect();
+            updateButtons();
         }
-
-        function typeWriterEffect() {
-            gsap.to("#typewriter", { text: "Even when miles apart… my heart is always with you ❤️", duration: 4, delay: 1 });
-            gsap.to(".main-title", { opacity: 1, scale: 1.1, duration: 2, delay: 4.5, ease: "elastic.out(1, 0.3)" });
-        }
-
-        function generateBgText() {
-            const container = document.getElementById('bg-text-pattern');
-            container.innerHTML = "LOVE U ".repeat(100);
-        }
-
-        document.getElementById('final-btn').addEventListener('click', () => {
-            gsap.to("#final-box", { opacity: 0, scale: 0.8, filter: "blur(10px)", duration: 1 });
-            gsap.to("#signature", { opacity: 1, scale: 1, duration: 1.5, ease: "power2.out" });
-        });
-
-        function createStars() {
-            const containers = [document.querySelector('#slide-4 .sky-container'), document.querySelector('#slide-5 .slide-5-overlay')];
-            containers.forEach(c => {
-                for (let i = 0; i < 50; i++) {
-                    let star = document.createElement('div');
-                    star.style.cssText = `position:absolute;left:${Math.random() * 100}%;top:${Math.random() * 100}%;width:2px;height:2px;background:white;border-radius:50%;opacity:${Math.random()};`;
-                    star.style.animation = `twinkle ${Math.random() * 3 + 2}s infinite ease-in-out`;
-                    c.appendChild(star);
-                }
-            });
-        }
-
-        // Heart Cursor Trail Logic
-        document.addEventListener('mousemove', (e) => {
-            if (Math.random() > 0.15) return;
-            const heart = document.createElement('div');
-            heart.className = 'cursor-heart';
-            heart.innerHTML = '❤️';
-            heart.style.left = e.clientX + 'px';
-            heart.style.top = e.clientY + 'px';
-            
-            // Random movement direction
-            const tx = (Math.random() - 0.5) * 100;
-            const ty = (Math.random() - 0.5) * 100;
-            heart.style.setProperty('--tx', `${tx}px`);
-            heart.style.setProperty('--ty', `${ty}px`);
-            
-            document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 1000);
-        });
-
-        createStars(); generateHearts(); generateBgText(); typeWriterEffect(); updateButtons();
+        init();
     </script>
 </body>
 
