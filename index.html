@@ -672,6 +672,16 @@
             pointer-events: none;
             animation: twinkle var(--d) infinite ease-in-out;
         }
+        .bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            pointer-events: none;
+        }
 
         /* Love Letter Modal Styles */
         .letter-modal {
@@ -757,6 +767,9 @@
 </head>
 
 <body>
+    <video class="bg-video" autoplay muted loop playsinline>
+        <source src="https://cdn.coverr.co/videos/coverr-valentine-heart-1479/1080p.mp4" type="video/mp4">
+    </video>
 
     <audio id="bg-music" loop>
         <source src="Tera_Khwab.mp3" type="audio/mpeg">
