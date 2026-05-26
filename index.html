@@ -315,6 +315,13 @@
             background: #fff;
             opacity: 0;
             transform: translateY(100px);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .memory-card:hover {
+            box-shadow: 0 20px 45px rgba(255, 77, 109, 0.4);
         }
 
         .memory-img {
@@ -1595,6 +1602,43 @@
             }
         });
 
+        // --- 3D TILT EFFECT ON MEMORY CARDS ---
+        function initTiltEffect() {
+            const cards = document.querySelectorAll('.memory-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const cardRect = card.getBoundingClientRect();
+                    const cardWidth = cardRect.width;
+                    const cardHeight = cardRect.height;
+                    const centerX = cardRect.left + cardWidth / 2;
+                    const centerY = cardRect.top + cardHeight / 2;
+                    const mouseX = e.clientX - centerX;
+                    const mouseY = e.clientY - centerY;
+                    
+                    // Rotate maximum of 15 degrees
+                    const rotateX = -(mouseY / (cardHeight / 2)) * 15;
+                    const rotateY = (mouseX / (cardWidth / 2)) * 15;
+                    
+                    gsap.to(card, {
+                        rotationX: rotateX,
+                        rotationY: rotateY,
+                        transformPerspective: 1000,
+                        ease: "power1.out",
+                        duration: 0.3
+                    });
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    gsap.to(card, {
+                        rotationX: 0,
+                        rotationY: 0,
+                        ease: "power2.out",
+                        duration: 0.5
+                    });
+                });
+            });
+        }
+
         // Initialize
         function init() {
             const container = document.getElementById('hearts-container');
@@ -1609,6 +1653,7 @@
             }
             typeWriterEffect();
             updateButtons();
+            initTiltEffect();
         }
         init();
     </script>
