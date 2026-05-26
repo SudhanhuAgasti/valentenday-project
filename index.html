@@ -1017,6 +1017,122 @@
             font-size: 24px;
             user-select: none;
         }
+        /* Settings Panel Styles */
+        .settings-control {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .settings-control:hover {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 15px var(--primary);
+            transform: rotate(45deg);
+        }
+
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10001;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .settings-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .settings-card {
+            background: linear-gradient(135deg, rgba(20, 20, 35, 0.95), rgba(255, 77, 109, 0.1));
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            padding: 30px;
+            width: min(90%, 400px);
+            box-shadow: 0 0 30px rgba(255, 77, 109, 0.3);
+            position: relative;
+            transform: scale(0.8);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+        }
+
+        .settings-modal.active .settings-card {
+            transform: scale(1);
+        }
+
+        .settings-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .settings-close:hover {
+            color: var(--primary);
+        }
+
+        .settings-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: white;
+            margin-bottom: 25px;
+        }
+
+        .settings-field {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .settings-field label {
+            display: block;
+            font-size: 0.9rem;
+            color: #ffccd5;
+            margin-bottom: 8px;
+            font-weight: 300;
+        }
+
+        .settings-field input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .settings-field input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(255, 77, 109, 0.3);
+        }
     </style>
 </head>
 
@@ -1035,6 +1151,28 @@
         <div class="music-visualizer"></div>
     </div>
 
+    <!-- Settings Button -->
+    <div class="settings-control" id="settings-btn">
+        <i class="fas fa-cog"></i>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settings-modal">
+        <div class="settings-card">
+            <span class="settings-close" id="close-settings-btn">&times;</span>
+            <h2 class="settings-title">Personalize Page 💖</h2>
+            <div class="settings-field">
+                <label for="your-name-input">Your Name</label>
+                <input type="text" id="your-name-input" placeholder="e.g. Sudhanshu" value="Love">
+            </div>
+            <div class="settings-field">
+                <label for="partner-name-input">Partner's Name</label>
+                <input type="text" id="partner-name-input" placeholder="e.g. Riya" value="My Love">
+            </div>
+            <button class="love-btn" id="save-settings-btn" style="margin-top: 15px; width: 100%;">Save & Personalize ✨</button>
+        </div>
+    </div>
+
     <div class="custom-cursor" id="cursor"></div>
     <canvas id="petals-canvas"></canvas>
 
@@ -1048,7 +1186,7 @@
             <div class="floating-hearts" id="hearts-container"></div>
             <div class="intro-content">
                 <div class="typewriter-text" id="typewriter"></div>
-                <h1 class="main-title script-font">Happy Valentine’s Day<br>My Love</h1>
+                <h1 class="main-title script-font">Happy Valentine’s Day<br><span class="partner-name-display">My Love</span></h1>
             </div>
         </div>
 
@@ -1056,7 +1194,7 @@
         <div class="slide" id="slide-2">
             <div class="bg-pattern" id="bg-text-pattern"></div>
             <div class="memories-container">
-                <h2 class="memories-title">My Love</h2>
+                <h2 class="memories-title"><span class="partner-name-display">My Love</span></h2>
                 <div class="gallery">
                     <div class="memory-card">
                         <div class="img-placeholder p1"></div>
@@ -1114,7 +1252,7 @@
                     <div class="pocket"></div>
                     <div class="letter">
                         <div class="letter-words">
-                            <h2 class="letter-title">Dear My Love,</h2>
+                            <h2 class="letter-title">Dear <span class="partner-name-display">My Love</span>,</h2>
                             <div class="letter-text">
                                 Every moment spent with you is like a beautiful dream come true. You bring so much joy, laughter, and warmth into my life. 
                                 
@@ -1174,7 +1312,7 @@
                     words...</p>
                 <button class="love-btn" id="final-btn">I LOVE YOU</button>
             </div>
-            <div class="final-signature" id="signature">Forever Yours – Love</div>
+            <div class="final-signature" id="signature">Forever Yours – <span class="your-name-display">Love</span></div>
         </div>
 
     </div>
@@ -1639,6 +1777,70 @@
             });
         }
 
+        // --- SETTINGS / PERSONALIZATION LOGIC ---
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const yourNameInput = document.getElementById('your-name-input');
+        const partnerNameInput = document.getElementById('partner-name-input');
+
+        // Toggle modal
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('active');
+        });
+
+        const closeSettings = () => {
+            settingsModal.classList.remove('active');
+        };
+
+        closeSettingsBtn.addEventListener('click', closeSettings);
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) closeSettings();
+        });
+
+        // Save & Apply customization
+        function applyCustomNames(yourName, partnerName) {
+            document.querySelectorAll('.partner-name-display').forEach(el => {
+                el.textContent = partnerName || 'My Love';
+            });
+            document.querySelectorAll('.your-name-display').forEach(el => {
+                el.textContent = yourName || 'Love';
+            });
+        }
+
+        saveSettingsBtn.addEventListener('click', () => {
+            const yourName = yourNameInput.value.trim();
+            const partnerName = partnerNameInput.value.trim();
+
+            localStorage.setItem('val_your_name', yourName);
+            localStorage.setItem('val_partner_name', partnerName);
+
+            applyCustomNames(yourName, partnerName);
+            closeSettings();
+
+            // Tiny Confetti pop
+            confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.8 }
+            });
+        });
+
+        function loadSettings() {
+            const savedYourName = localStorage.getItem('val_your_name');
+            const savedPartnerName = localStorage.getItem('val_partner_name');
+
+            if (savedYourName !== null) {
+                yourNameInput.value = savedYourName;
+            }
+            if (savedPartnerName !== null) {
+                partnerNameInput.value = savedPartnerName;
+            }
+
+            applyCustomNames(savedYourName || 'Love', savedPartnerName || 'My Love');
+        }
+
         // Initialize
         function init() {
             const container = document.getElementById('hearts-container');
@@ -1654,6 +1856,7 @@
             typeWriterEffect();
             updateButtons();
             initTiltEffect();
+            loadSettings();
         }
         init();
     </script>
