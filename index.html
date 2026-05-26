@@ -706,21 +706,285 @@
             visibility: visible;
         }
 
-        .letter-card {
-            background: linear-gradient(135deg, rgba(255, 77, 109, 0.15), rgba(20, 20, 35, 0.95));
-            border: 2px solid var(--primary);
-            border-radius: 20px;
-            padding: 40px;
-            width: min(90%, 500px);
-            box-shadow: 0 0 30px rgba(255, 77, 109, 0.3);
+        /* 3D Envelope Styles */
+        .envelope-wrapper {
             position: relative;
-            transform: scale(0.7) rotate(-5deg);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: min(90%, 450px);
+            height: 300px;
+            perspective: 1000px;
+            z-index: 5;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .envelope-wrapper:hover {
+            transform: scale(1.03);
+        }
+
+        .envelope {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #ff4d6d;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 77, 109, 0.2);
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+        }
+
+        /* The Flap */
+        .envelope .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: calc(min(90vw, 450px) / 2) solid transparent;
+            border-right: calc(min(90vw, 450px) / 2) solid transparent;
+            border-top: 150px solid #ff3355; /* Slightly darker pink/red */
+            transform-origin: top;
+            z-index: 4;
+            transition: transform 0.6s ease, z-index 0.2s ease 0.4s;
+            filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Adjust borders on mobile */
+        @media (max-width: 500px) {
+            .envelope .flap {
+                border-left: calc(90vw / 2) solid transparent;
+                border-right: calc(90vw / 2) solid transparent;
+                border-top: calc(90vw * 0.33) solid #ff3355;
+            }
+        }
+
+        /* Pocket/Front flaps of envelope */
+        .envelope .pocket {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff5e7e 0%, #ff4d6d 100%);
+            border-radius: 0 0 15px 15px;
+            z-index: 3;
+            clip-path: polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%, 50% 60%);
+            box-shadow: inset 0 2px 5px rgba(255,255,255,0.4);
+        }
+
+        /* The actual letter inside */
+        .envelope .letter {
+            position: absolute;
+            bottom: 10px;
+            left: 5%;
+            width: 90%;
+            height: 85%;
+            background: linear-gradient(135deg, #fffafb 0%, #ffe5ec 100%);
+            border-radius: 10px;
+            z-index: 2;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.1) 0.3s, z-index 0s linear 0.5s, width 0.5s ease, height 0.5s ease, left 0.5s ease, bottom 0.5s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            border: 1px solid rgba(255, 77, 109, 0.2);
+        }
+
+        .envelope .letter .letter-words {
+            width: 100%;
+            height: 100%;
+            opacity: 0.3;
+            transition: opacity 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) transparent;
+        }
+
+        .envelope .letter .letter-words::-webkit-scrollbar {
+            width: 4px;
+        }
+        .envelope .letter .letter-words::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .envelope .letter .letter-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2rem;
+            color: var(--dark-red);
+            margin-bottom: 15px;
             text-align: center;
         }
 
-        .letter-modal.active .letter-card {
-            transform: scale(1) rotate(0deg);
+        .envelope .letter .letter-text {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #5c0620;
+            font-weight: 400;
+            text-align: center;
+            white-space: pre-line;
+        }
+
+        /* Envelope Open States */
+        .envelope-wrapper.open .envelope .flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+            transition: transform 0.5s ease, z-index 0s linear 0.2s;
+        }
+
+        .envelope-wrapper.open .envelope .letter {
+            transform: translateY(-120px);
+            z-index: 5;
+        }
+        
+        /* Fully Zoomed/Expanded Letter State for Reading */
+        .envelope-wrapper.read-active {
+            pointer-events: none;
+        }
+        
+        .envelope-wrapper.read-active .envelope .letter {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            bottom: auto;
+            transform: translate(-50%, -50%) scale(1) !important;
+            width: min(90vw, 550px);
+            height: min(85vh, 650px);
+            z-index: 20000;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(255, 77, 109, 0.3);
+            border: 3px solid var(--primary);
+            padding: 40px;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.2), width 0.6s, height 0.6s;
+            cursor: default;
+            pointer-events: auto;
+        }
+
+        .envelope-wrapper.read-active .envelope .letter .letter-words {
+            opacity: 1;
+        }
+
+        .envelope-wrapper.read-active .envelope .letter .letter-title {
+            font-size: 3.2rem;
+            margin-bottom: 25px;
+        }
+
+        .envelope-wrapper.read-active .envelope .letter .letter-text {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            color: #5c0620;
+        }
+
+        /* Floating Hearts from open envelope */
+        .envelope .hearts {
+            position: absolute;
+            top: 90px;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        .envelope .heart {
+            position: absolute;
+            background: var(--primary);
+            display: inline-block;
+            height: 15px;
+            width: 15px;
+            opacity: 0;
+            transform: rotate(-45deg) scale(0.5);
+            transition: all 0.5s ease;
+        }
+
+        .envelope .heart:before,
+        .envelope .heart:after {
+            content: "";
+            background: var(--primary);
+            border-radius: 50%;
+            height: 15px;
+            position: absolute;
+            width: 15px;
+        }
+
+        .envelope .heart:before {
+            top: -7.5px;
+            left: 0;
+        }
+
+        .envelope .heart:after {
+            left: 7.5px;
+            top: 0;
+        }
+
+        .envelope-wrapper.open .envelope .heart {
+            opacity: 1;
+            animation: floatHeart 2s ease-in-out infinite;
+        }
+
+        .envelope-wrapper.open .envelope .heart.a1 {
+            left: 20%;
+            animation-delay: 0.2s;
+        }
+        .envelope-wrapper.open .envelope .heart.a2 {
+            left: 50%;
+            animation-delay: 0.7s;
+        }
+        .envelope-wrapper.open .envelope .heart.a3 {
+            left: 80%;
+            animation-delay: 0.4s;
+        }
+
+        @keyframes floatHeart {
+            0% {
+                transform: translateY(0) rotate(-45deg) scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-150px) rotate(-45deg) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Close inside Letter Card */
+        .letter-ok-btn-container {
+            display: none;
+            width: 100%;
+            margin-top: auto;
+        }
+        
+        .envelope-wrapper.read-active .letter-ok-btn-container {
+            display: block;
+        }
+
+        /* Tip text above envelope */
+        .envelope-tip {
+            position: absolute;
+            top: -45px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #ffccd5;
+            font-size: 1.1rem;
+            animation: pulse-tip 1.5s infinite;
+            font-family: 'Poppins', sans-serif;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes pulse-tip {
+            0%, 100% { transform: translateY(0); opacity: 0.7; }
+            50% { transform: translateY(-5px); opacity: 1; }
         }
 
         .letter-close {
@@ -731,28 +995,11 @@
             font-size: 1.5rem;
             cursor: pointer;
             transition: color 0.3s;
+            z-index: 20002;
         }
 
         .letter-close:hover {
             color: var(--primary);
-        }
-
-        .letter-title {
-            font-family: 'Great Vibes', cursive;
-            font-size: 3rem;
-            color: var(--primary);
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(255, 77, 109, 0.4);
-        }
-
-        .letter-text {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: #ffccd5;
-            margin-bottom: 25px;
-            font-weight: 300;
-            text-align: center;
-            white-space: pre-line;
         }
 
         /* Heart particle explosion styles */
@@ -852,19 +1099,35 @@
 
         <!-- LOVE LETTER MODAL -->
         <div class="letter-modal" id="letter-modal">
-            <div class="letter-card">
-                <span class="letter-close" id="close-letter-btn">&times;</span>
-                <h2 class="letter-title">Dear My Love,</h2>
-                <div class="letter-text">
-                    Every moment spent with you is like a beautiful dream come true. You bring so much joy, laughter, and warmth into my life. 
-                    
-                    No matter where life takes us, or how many miles lie between us, my heart will always beat for you. You are my best friend, my greatest adventure, and my favorite person in the entire universe.
-                    
-                    Thank you for being you, and for making my world so much brighter.
-                    
-                    Happy Valentine's Day! ❤️
+            <span class="letter-close" id="close-letter-btn">&times;</span>
+            <div class="envelope-wrapper" id="envelope-wrapper">
+                <div class="envelope-tip" id="envelope-tip">✉️ Tap to open envelope</div>
+                <div class="envelope" id="envelope">
+                    <div class="flap"></div>
+                    <div class="pocket"></div>
+                    <div class="letter">
+                        <div class="letter-words">
+                            <h2 class="letter-title">Dear My Love,</h2>
+                            <div class="letter-text">
+                                Every moment spent with you is like a beautiful dream come true. You bring so much joy, laughter, and warmth into my life. 
+                                
+                                No matter where life takes us, or how many miles lie between us, my heart will always beat for you. You are my best friend, my greatest adventure, and my favorite person in the entire universe.
+                                
+                                Thank you for being you, and for making my world so much brighter.
+                                
+                                Happy Valentine's Day! ❤️
+                            </div>
+                            <div class="letter-ok-btn-container">
+                                <button class="love-btn" id="close-letter-ok-btn" style="margin-top: 15px; width: 100%;">Close with Love ❤️</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hearts">
+                        <div class="heart a1"></div>
+                        <div class="heart a2"></div>
+                        <div class="heart a3"></div>
+                    </div>
                 </div>
-                <button class="love-btn" id="close-letter-ok-btn" style="margin-top: 15px;">Close with Love ❤️</button>
             </div>
         </div>
 
@@ -1119,21 +1382,67 @@
 
         // --- LOVE LETTER MODAL LOGIC ---
         const letterModal = document.getElementById('letter-modal');
+        const envelopeWrapper = document.getElementById('envelope-wrapper');
+        const envelopeTip = document.getElementById('envelope-tip');
         const closeLetterBtn = document.getElementById('close-letter-btn');
         const closeLetterOkBtn = document.getElementById('close-letter-ok-btn');
 
         readLetterBtn.addEventListener('click', () => {
+            // Reset to closed state
+            envelopeWrapper.classList.remove('open', 'read-active');
+            envelopeTip.style.opacity = '1';
+            envelopeTip.style.display = 'block';
+            
+            // Show modal
             letterModal.classList.add('active');
         });
 
-        const closeLetter = () => {
-            letterModal.classList.remove('active');
+        envelopeWrapper.addEventListener('click', (e) => {
+            // Avoid triggering envelope toggle when clicking close buttons inside the letter card
+            if (e.target.closest('#close-letter-ok-btn') || e.target.closest('.letter-ok-btn-container')) {
+                return;
+            }
+
+            if (!envelopeWrapper.classList.contains('open')) {
+                envelopeWrapper.classList.add('open');
+                envelopeTip.style.opacity = '0';
+                setTimeout(() => {
+                    envelopeTip.style.display = 'none';
+                }, 500);
+
+                // Slide up and expand letter card after envelope flap opens
+                setTimeout(() => {
+                    envelopeWrapper.classList.add('read-active');
+                }, 1000);
+            }
+        });
+
+        const closeLetter = (e) => {
+            if (e) e.stopPropagation();
+            
+            // Animate transition back to closed envelope before closing modal
+            if (envelopeWrapper.classList.contains('read-active')) {
+                envelopeWrapper.classList.remove('read-active');
+                setTimeout(() => {
+                    envelopeWrapper.classList.remove('open');
+                    setTimeout(() => {
+                        letterModal.classList.remove('active');
+                    }, 500);
+                }, 600);
+            } else {
+                envelopeWrapper.classList.remove('open');
+                letterModal.classList.remove('active');
+            }
         };
 
         closeLetterBtn.addEventListener('click', closeLetter);
         closeLetterOkBtn.addEventListener('click', closeLetter);
+        
+        // Prevent clicking modal backdrop from immediately hard-closing when letter is open/reading
         letterModal.addEventListener('click', (e) => {
-            if (e.target === letterModal) closeLetter();
+            if (e.target === letterModal) {
+                closeLetter();
+            }
         });
 
         function typeWriterEffect() {
