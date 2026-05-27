@@ -1241,6 +1241,108 @@
             font-family: 'Great Vibes', cursive;
             font-size: 2.2rem;
         }
+
+        /* --- SCRATCH CARD SLIDE --- */
+        #slide-scratch {
+            background: radial-gradient(circle at 30% 40%, #1a0a2e, #0d0015 60%, #000);
+        }
+
+        .scratch-scene {
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: min(92%, 480px);
+        }
+
+        .scratch-heading {
+            font-size: 2rem;
+            color: #fff;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255, 77, 109, 0.7);
+        }
+
+        .scratch-card-wrap {
+            position: relative;
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(255, 215, 0, 0.15);
+        }
+
+        /* Hidden message underneath */
+        .scratch-reveal {
+            width: 100%;
+            min-height: 220px;
+            background: linear-gradient(135deg, #fffafb, #ffe5ec);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 25px;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .scratch-reveal-emoji {
+            font-size: 3rem;
+            animation: floatUpDown 2s ease-in-out infinite;
+        }
+
+        @keyframes floatUpDown {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .scratch-reveal-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2.2rem;
+            color: #800f2f;
+        }
+
+        .scratch-reveal-text {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            color: #5c0620;
+            line-height: 1.6;
+        }
+
+        /* Canvas scratch overlay — sits on top */
+        #scratch-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            border-radius: 20px;
+            touch-action: none;
+        }
+
+        .scratch-hint {
+            font-size: 0.9rem;
+            color: #ffccd5;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            animation: pulse-tip 1.8s infinite;
+        }
+
+        .scratch-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .scratch-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--gold));
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 
@@ -1421,6 +1523,31 @@
             <div class="proposal-btns">
                 <button class="love-btn" id="yes-btn">YES! 😍</button>
                 <button class="love-btn" id="no-btn">NO 😢</button>
+            </div>
+        </div>
+
+        <!-- SLIDE SCRATCH -->
+        <div class="slide" id="slide-scratch">
+            <div class="scratch-scene">
+                <h2 class="scratch-heading script-font">A Secret Awaits You ✨</h2>
+                <p class="scratch-hint">🪙 Scratch the card to reveal your surprise!</p>
+                <div class="scratch-card-wrap" id="scratch-card-wrap">
+                    <!-- Hidden message below canvas -->
+                    <div class="scratch-reveal">
+                        <div class="scratch-reveal-emoji">💝</div>
+                        <div class="scratch-reveal-title">You are my everything!</div>
+                        <div class="scratch-reveal-text">
+                            Every second with you is a memory I'll cherish forever.<br>
+                            No distance, no time, can ever change how I feel for you. ❤️
+                        </div>
+                    </div>
+                    <!-- Canvas scratch overlay -->
+                    <canvas id="scratch-canvas"></canvas>
+                </div>
+                <div class="scratch-progress-bar">
+                    <div class="scratch-progress-fill" id="scratch-progress-fill"></div>
+                </div>
+                <p class="scratch-hint" id="scratch-pct-text">0% scratched — keep going!</p>
             </div>
         </div>
 
@@ -1675,12 +1802,115 @@
             }
         }
 
+        // --- SCRATCH CARD LOGIC ---
+        let scratchInitialized = false;
+
+        function initScratchCard() {
+            const canvas = document.getElementById('scratch-canvas');
+            const wrap = document.getElementById('scratch-card-wrap');
+            const progressFill = document.getElementById('scratch-progress-fill');
+            const pctText = document.getElementById('scratch-pct-text');
+
+            // Reset each time slide is visited
+            scratchInitialized = true;
+            nextBtn.classList.add('hidden');
+            pctText.textContent = '0% scratched — keep going!';
+            progressFill.style.width = '0%';
+            canvas.style.opacity = '1';
+            canvas.style.transition = '';
+
+            // Size canvas to match wrap
+            const rect = wrap.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            const ctx = canvas.getContext('2d');
+
+            // Draw golden-gradient metallic scratch surface
+            const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            grad.addColorStop(0,   '#c0922e');
+            grad.addColorStop(0.3, '#f5d78a');
+            grad.addColorStop(0.6, '#b8791e');
+            grad.addColorStop(1,   '#f0c040');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Sparkle hint text
+            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            ctx.font = `bold ${Math.max(14, canvas.width * 0.045)}px Poppins, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText('✨ Scratch here ✨', canvas.width / 2, canvas.height / 2 - 10);
+            ctx.font = `${Math.max(11, canvas.width * 0.032)}px Poppins, sans-serif`;
+            ctx.fillText('Apna surprise dhundho! 🪄', canvas.width / 2, canvas.height / 2 + 20);
+
+            let isDrawing = false;
+            let revealed = false;
+
+            function getPos(e) {
+                const r = canvas.getBoundingClientRect();
+                const src = e.touches ? e.touches[0] : e;
+                return { x: src.clientX - r.left, y: src.clientY - r.top };
+            }
+
+            function scratch(x, y) {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x, y, 28, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalCompositeOperation = 'source-over';
+
+                if (!revealed) checkScratchPercent();
+            }
+
+            function checkScratchPercent() {
+                const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                let transparent = 0;
+                for (let i = 3; i < data.length; i += 4) {
+                    if (data[i] === 0) transparent++;
+                }
+                const total = canvas.width * canvas.height;
+                const pct = Math.round((transparent / total) * 100);
+
+                progressFill.style.width = pct + '%';
+                pctText.textContent = pct + '% scratched' + (pct < 60 ? ' — keep going!' : '');
+
+                if (pct >= 60 && !revealed) {
+                    revealed = true;
+                    // Fade out remaining overlay
+                    canvas.style.transition = 'opacity 0.8s ease';
+                    canvas.style.opacity = '0';
+                    setTimeout(() => { canvas.style.pointerEvents = 'none'; }, 800);
+
+                    pctText.textContent = '🎉 Surprise revealed! ❤️';
+                    progressFill.style.width = '100%';
+
+                    confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 }, colors: ['#ff4d6d', '#ffd700', '#fff'] });
+                    setTimeout(() => {
+                        nextBtn.classList.remove('hidden');
+                        gsap.fromTo(nextBtn, { scale: 0 }, { scale: 1, duration: 0.5, ease: 'back.out(1.5)' });
+                    }, 800);
+                }
+            }
+
+            // Mouse events
+            canvas.addEventListener('mousedown', (e) => { isDrawing = true; const p = getPos(e); scratch(p.x, p.y); });
+            canvas.addEventListener('mousemove', (e) => { if (!isDrawing) return; const p = getPos(e); scratch(p.x, p.y); });
+            canvas.addEventListener('mouseup', () => isDrawing = false);
+            canvas.addEventListener('mouseleave', () => isDrawing = false);
+
+            // Touch events
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const p = getPos(e); scratch(p.x, p.y); }, { passive: false });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!isDrawing) return; const p = getPos(e); scratch(p.x, p.y); }, { passive: false });
+            canvas.addEventListener('touchend', () => isDrawing = false);
+        }
+
         // --- SLIDE NAVIGATION ---
+
         function updateButtons() {
             if (currentSlide === 0) prevBtn.classList.add('hidden'); else prevBtn.classList.remove('hidden');
             
-            // Hide next button on specific slides (2 is Game slide, 3 is Gift slide, 5 is Proposal slide, 6 is Final slide)
-            const hideNextOn = [2, 3, 5, 6];
+            // Hide next button on specific slides (2=Game, 3=Gift, 5=Proposal, 6=Scratch, 7=Final)
+            const hideNextOn = [2, 3, 5, 6, 7];
             if (hideNextOn.includes(currentSlide)) nextBtn.classList.add('hidden'); else nextBtn.classList.remove('hidden');
         }
 
@@ -1706,6 +1936,9 @@
             }
             if (index === 2) {
                 initMemoryGame();
+            }
+            if (index === 6) {
+                initScratchCard();
             }
             if (index === 4) {
                 generateStars();
