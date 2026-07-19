@@ -12,3 +12,4 @@ how ever they far away from each other
 this vdo id made for every loverss 
 They should be either be grateful.
 It is made for exact situation 
+Both the value should be eqaukk
